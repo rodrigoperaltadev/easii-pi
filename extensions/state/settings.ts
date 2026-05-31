@@ -16,9 +16,15 @@ export function getVerbosity(cwd: string): Verbosity {
 	const filePath = path.join(cwd, ".pi", "settings.json");
 	if (!fs.existsSync(filePath)) return DEFAULT_VERBOSITY;
 	try {
-		const data = JSON.parse(fs.readFileSync(filePath, "utf-8")) as EasiiSettings;
+		const data = JSON.parse(
+			fs.readFileSync(filePath, "utf-8"),
+		) as EasiiSettings;
 		const verbosity = data.easii?.verbosity;
-		if (verbosity === "off" || verbosity === "minimal" || verbosity === "full") {
+		if (
+			verbosity === "off" ||
+			verbosity === "minimal" ||
+			verbosity === "full"
+		) {
 			return verbosity;
 		}
 		return DEFAULT_VERBOSITY;

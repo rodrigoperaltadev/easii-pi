@@ -20,5 +20,8 @@ export function readState(cwd: string): EasiiState | null {
 export function writeState(cwd: string, state: EasiiState): void {
 	const dir = path.join(cwd, ".pi");
 	fs.mkdirSync(dir, { recursive: true });
-	fs.writeFileSync(path.join(dir, "easii-state.json"), JSON.stringify(state, null, 2));
+	fs.writeFileSync(
+		path.join(dir, "easii-state.json"),
+		JSON.stringify(state, null, 2),
+	);
 }
