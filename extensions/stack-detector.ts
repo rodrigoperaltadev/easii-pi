@@ -668,48 +668,55 @@ function dockerApplies(profile: ProfileName): boolean {
 	);
 }
 
-function detectCapabilities(
-	cwd: string,
+function detectUnitTestsCapability(
+	commands: InferredProjectCommands,
 	stack: DetectedStack,
-): ProjectCapabilities {
-	const commands = inferProjectCommands(cwd, stack);
-	const configText = readTextIfExists(
-		path.join(cwd, "openspec", "config.yaml"),
-	);
-	const unitTests: ProjectCapability = commands.unitCommand
-		? {
-				status: "configured",
-				summary: commands.unitCommand,
-					details: [
-						stack.testFramework !== "none"
-							? stack.testFramework
-							: "detected via script",
-					],
-				}
-				: stack.testFramework !== "none"
-					? {
-							status: "detected-partial",
-							summary: `${stack.testFramework} detected without clear script`,
-						}
-					: { status: "missing", summary: "unit tests not detected" };
+): ProjectCapability {
+	if (commands.unitCommand) {
+		return {
+			status: "configured",
+			summary: commands.unitCommand,
+			details: [
+				stack.testFramework !== "none"
+					? stack.testFramework
+					: "detected via script",
+			],
+		};
+	}
+	if (stack.testFramework !== "none") {
+		return {
+			status: "detected-partial",
+			summary: `${stack.testFramework} detected without clear script`,
+		};
+	}
+	return { status: "missing", summary: "unit tests not detected" };
+}
 
-	const e2eTests: ProjectCapability = commands.e2eCommand
-		? {
-				status: "configured",
-				summary: commands.e2eCommand,
-				details: [
-							stack.e2eFramework !== "none"
-								? stack.e2eFramework
-								: "detected via script",
-						],
-				}
-				: stack.e2eFramework !== "none"
-					? {
-						status: "detected-partial",
-						summary: `${stack.e2eFramework} detected without clear command`,
-					}
-					: { status: "missing", summary: "E2E not detected" };
+function detectE2eCapability(
+	commands: InferredProjectCommands,
+	stack: DetectedStack,
+): ProjectCapability {
+	if (commands.e2eCommand) {
+		return {
+			status: "configured",
+			summary: commands.e2eCommand,
+			details: [
+				stack.e2eFramework !== "none"
+					? stack.e2eFramework
+					: "detected via script",
+			],
+		};
+	}
+	if (stack.e2eFramework !== "none") {
+		return {
+			status: "detected-partial",
+			summary: `${stack.e2eFramework} detected without clear command`,
+		};
+	}
+	return { status: "missing", summary: "E2E not detected" };
+}
 
+function detectCiCapability(cwd: string): ProjectCapability {
 	const hasCi =
 		hasGithubWorkflow(cwd) ||
 		hasAnyFile(cwd, [".gitlab-ci.yml", "bitbucket-pipelines.yml"]);
@@ -722,39 +729,63 @@ function detectCapabilities(
 		/(test|typecheck|type-check|lint|vitest|jest|playwright|maestro)/i.test(
 			ciText,
 		);
-	const ci: ProjectCapability = hasCi
-		? ciRunsQuality
-			? { status: "configured", summary: "CI detected with quality checks" }
-			: {
-					status: "detected-partial",
-					summary: "CI detected without clear checks",
-				}
-		: { status: "missing", summary: "CI not detected" };
 
+	if (!hasCi) {
+		return { status: "missing", summary: "CI not detected" };
+	}
+	return ciRunsQuality
+		? { status: "configured", summary: "CI detected with quality checks" }
+		: {
+				status: "detected-partial",
+				summary: "CI detected without clear checks",
+			};
+}
+
+function detectCdCapability(
+	cwd: string,
+	stack: DetectedStack,
+): ProjectCapability {
 	const hasCdFile = hasAnyFile(cwd, [
 		"vercel.json",
 		"netlify.toml",
 		"fly.toml",
 		"render.yaml",
 	]);
+	const ciText = [
+		readGithubWorkflowText(cwd),
+		readTextIfExists(path.join(cwd, ".gitlab-ci.yml")),
+		readTextIfExists(path.join(cwd, "bitbucket-pipelines.yml")),
+	].join("\n");
 	const hasDeployWorkflow =
 		/(deploy|release|publish|eas build|vercel|netlify|flyctl|docker push)/i.test(
 			ciText,
 		);
-	const cd: ProjectCapability =
-		stack.hasEAS || hasCdFile || hasDeployWorkflow
-			? {
-					status:
-						hasDeployWorkflow || stack.hasEAS
-							? "configured"
-							: "detected-partial",
-					summary: stack.hasEAS
-						? "EAS Build detected"
-						: hasDeployWorkflow
-							? "deploy/release workflow detected"
-							: "platform file detected",
-				}
-			: { status: "missing", summary: "CD/deploy not detected" };
+
+	if (!stack.hasEAS && !hasCdFile && !hasDeployWorkflow) {
+		return { status: "missing", summary: "CD/deploy not detected" };
+	}
+
+	const status =
+		hasDeployWorkflow || stack.hasEAS ? "configured" : "detected-partial";
+	const summary = stack.hasEAS
+		? "EAS Build detected"
+		: hasDeployWorkflow
+			? "deploy/release workflow detected"
+			: "platform file detected";
+
+	return { status, summary };
+}
+
+function detectDockerCapability(
+	cwd: string,
+	stack: DetectedStack,
+): ProjectCapability {
+	if (!dockerApplies(stack.profile)) {
+		return {
+			status: "not-applicable",
+			summary: "not evaluated for this profile",
+		};
+	}
 
 	const hasDockerfile = fs.existsSync(path.join(cwd, "Dockerfile"));
 	const hasCompose = hasAnyFile(cwd, [
@@ -764,30 +795,43 @@ function detectCapabilities(
 		"compose.yaml",
 	]);
 	const hasDockerignore = fs.existsSync(path.join(cwd, ".dockerignore"));
-	const docker: ProjectCapability = !dockerApplies(stack.profile)
-		? { status: "not-applicable", summary: "not evaluated for this profile" }
-		: hasDockerfile
-			? {
-					status: hasDockerignore ? "configured" : "detected-partial",
-					summary: hasDockerignore
-						? "Dockerfile + .dockerignore"
-						: "Dockerfile without .dockerignore",
-					details: hasCompose ? ["compose detected"] : undefined,
-				}
-			: hasCompose
-				? {
-						status: "detected-partial",
-						summary: "compose detected without Dockerfile",
-					}
-				: { status: "missing", summary: "Docker not detected" };
+
+	if (!hasDockerfile && !hasCompose) {
+		return { status: "missing", summary: "Docker not detected" };
+	}
+
+	if (hasDockerfile) {
+		return {
+			status: hasDockerignore ? "configured" : "detected-partial",
+			summary: hasDockerignore
+				? "Dockerfile + .dockerignore"
+				: "Dockerfile without .dockerignore",
+			details: hasCompose ? ["compose detected"] : undefined,
+		};
+	}
 
 	return {
-		unitTests,
-		e2eTests,
+		status: "detected-partial",
+		summary: "compose detected without Dockerfile",
+	};
+}
+
+function detectCapabilities(
+	cwd: string,
+	stack: DetectedStack,
+): ProjectCapabilities {
+	const commands = inferProjectCommands(cwd, stack);
+	const configText = readTextIfExists(
+		path.join(cwd, "openspec", "config.yaml"),
+	);
+
+	return {
+		unitTests: detectUnitTestsCapability(commands, stack),
+		e2eTests: detectE2eCapability(commands, stack),
 		strictTdd: detectStrictTdd(configText),
-		ci,
-		cd,
-		docker,
+		ci: detectCiCapability(cwd),
+		cd: detectCdCapability(cwd, stack),
+		docker: detectDockerCapability(cwd, stack),
 	};
 }
 
