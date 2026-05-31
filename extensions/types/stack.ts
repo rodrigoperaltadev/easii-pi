@@ -55,3 +55,18 @@ export type PackageManager = InferredProjectCommands["packageManager"];
  * Used as parameter bound in dockerApplies() and runProjectSetupBlockBuilder().
  */
 export type ProfileName = ProjectProfile;
+
+/**
+ * Structured Package.json read from disk.
+ * Replaces duck typing with explicit shape.
+ */
+export interface PackageJson {
+	name?: string;
+	version?: string;
+	main?: string;
+	types?: string;
+	files?: string[];
+	dependencies?: Record<string, string>;
+	devDependencies?: Record<string, string>;
+	scripts?: Record<string, string>;
+}

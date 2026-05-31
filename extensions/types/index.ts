@@ -8,6 +8,7 @@ export type {
 	InferredProjectCommands,
 	PackageManager,
 	ProfileName,
+	PackageJson,
 } from "./stack.js";
 
 // skills

@@ -9,6 +9,7 @@ import type {
 	InferredProjectCommands,
 	PackageManager,
 	ProfileName,
+	PackageJson,
 	MarketplaceSkill,
 	LocalSkill,
 	SkillSuggestion,
@@ -28,27 +29,29 @@ import type {
 
 // ─── Stack Detection ───────────────────────────────────────────────────────
 
-function readPackageJson(cwd: string): Record<string, unknown> | null {
+function readPackageJson(cwd: string): PackageJson | null {
 	try {
 		const pkgPath = path.join(cwd, "package.json");
 		if (!fs.existsSync(pkgPath)) return null;
-		return JSON.parse(fs.readFileSync(pkgPath, "utf-8"));
+		const raw = JSON.parse(fs.readFileSync(pkgPath, "utf-8"));
+		return raw as PackageJson;
 	} catch {
 		return null;
 	}
 }
 
-function getDeps(pkg: Record<string, unknown>): string[] {
-	const deps = pkg["dependencies"] as Record<string, string> | undefined;
-	const devDeps = pkg["devDependencies"] as Record<string, string> | undefined;
-	return [...Object.keys(deps ?? {}), ...Object.keys(devDeps ?? {})];
+function getDeps(pkg: PackageJson): string[] {
+	return [
+		...Object.keys(pkg.dependencies ?? {}),
+		...Object.keys(pkg.devDependencies ?? {}),
+	];
 }
 
 function getPackageScripts(cwd: string): Record<string, string> {
 	const pkg = readPackageJson(cwd);
-	const scripts = pkg?.["scripts"];
-	if (!scripts || typeof scripts !== "object") return {};
-	return scripts as Record<string, string>;
+	const scripts = pkg?.scripts;
+	if (!scripts) return {};
+	return scripts;
 }
 
 function detectPackageManager(cwd: string): PackageManager {
