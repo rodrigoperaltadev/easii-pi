@@ -40,7 +40,7 @@ pi install npm:@juicesharp/rpiv-ask-user-question  # structured dialogs
 
 ### Stack Detector
 
-On every `session_start`, the package reads your `package.json` and detects:
+On session_start, the package reads your `package.json` and detects the project profile. By default, it shows a one-liner only on the first session or when the stack changes. Use `/easii:stack` for the full report.
 
 | Profile | Trigger |
 |---------|---------|
@@ -212,6 +212,40 @@ Detected capabilities — read-only
 
   – Docker: not evaluated for this profile
      (not applicable for react-native-expo)
+```
+
+## Verbosity
+
+By default, @easii/pi runs silently on session_start and shows a one-liner only when the stack changes. Full output is on-demand via `/easii:stack`.
+
+Configure verbosity in `.pi/settings.json`:
+
+```json
+{
+  "easii": {
+    "verbosity": "minimal"
+  }
+}
+```
+
+| Value | Behavior |
+|-------|----------|
+| `minimal` (default) | One-liner on first session or when stack changes |
+| `full` | Full dump on every session (includes marketplace fetch, ~4s latency) |
+| `off` | Completely silent on session_start |
+
+**Note:** `full` mode is the legacy behavior. It makes a network call to the skills marketplace on every session.
+
+### Backward compatibility
+
+To restore the old behavior (full dump on every session):
+
+```json
+{
+  "easii": {
+    "verbosity": "full"
+  }
+}
 ```
 
 ## Development

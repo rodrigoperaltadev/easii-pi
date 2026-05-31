@@ -29,6 +29,9 @@ npm-debug.log*
 .atl/
 .pi'session/
 
+# @easii/pi state (local, not shared)
+.pi/easii-state.json
+
 # Temporary
 tmp/
 temp/

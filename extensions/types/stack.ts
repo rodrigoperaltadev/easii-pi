@@ -19,6 +19,7 @@ export type ProjectProfile =
  */
 export interface DetectedStack {
 	profile: ProjectProfile;
+	triggerDeps: string[]; // Deps that fired profile detection (single source of truth for signal hash)
 	deps: string[];
 	hasTypeScript: boolean;
 	hasExpoRouter: boolean;

@@ -1,7 +1,10 @@
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
+import * as crypto from "node:crypto";
 import * as fs from "node:fs";
 import * as path from "node:path";
 import { fileURLToPath } from "node:url";
+
+import { getVerbosity, readState, writeState } from "./state/index.js";
 
 import type {
 	ProjectProfile,
@@ -189,15 +192,32 @@ function detectStack(cwd: string): DetectedStack | null {
 	const has = (name: string) => deps.includes(name);
 
 	let profile: ProjectProfile = "unknown";
-	if (has("expo")) profile = "react-native-expo";
-	else if (has("react-native")) profile = "react-native-bare";
-	else if (has("next")) profile = "nextjs";
-	else if (has("react") && !has("react-native")) profile = "react-web";
-	else if (has("phaser")) profile = "gamedev-phaser";
-	else if (has("pixi.js") || has("@pixi/app")) profile = "gamedev-pixi";
-	else if (pkg["main"] && !has("react")) profile = "node-backend";
-	else if ((pkg["types"] || Array.isArray(pkg["files"])) && !has("react"))
+	let triggerDeps: string[] = [];
+	if (has("expo")) {
+		profile = "react-native-expo";
+		triggerDeps = ["expo"];
+	} else if (has("react-native")) {
+		profile = "react-native-bare";
+		triggerDeps = ["react-native"];
+	} else if (has("next")) {
+		profile = "nextjs";
+		triggerDeps = ["next"];
+	} else if (has("react") && !has("react-native")) {
+		profile = "react-web";
+		triggerDeps = ["react"];
+	} else if (has("phaser")) {
+		profile = "gamedev-phaser";
+		triggerDeps = ["phaser"];
+	} else if (has("pixi.js") || has("@pixi/app")) {
+		profile = "gamedev-pixi";
+		triggerDeps = ["pixi.js"];
+	} else if (pkg["main"] && !has("react")) {
+		profile = "node-backend";
+		triggerDeps = ["node-backend"];
+	} else if ((pkg["types"] || Array.isArray(pkg["files"])) && !has("react")) {
 		profile = "npm-library";
+		triggerDeps = ["npm-library"];
+	}
 
 	const hasTypeScript =
 		has("typescript") || fs.existsSync(path.join(cwd, "tsconfig.json"));
@@ -225,6 +245,7 @@ function detectStack(cwd: string): DetectedStack | null {
 
 	return {
 		profile,
+		triggerDeps,
 		deps,
 		hasTypeScript,
 		hasExpoRouter,
@@ -243,6 +264,11 @@ const MARKETPLACE_API = "https://openagentskill.com/api/agent";
 const MIN_DOWNLOADS = 500;
 // Minimum rating (out of 5) to consider a marketplace skill trustworthy
 const MIN_RATING = 3.5;
+
+function computeSignalsHash(stack: DetectedStack): string {
+	const signals = [stack.profile, ...stack.triggerDeps].sort().join("|");
+	return crypto.createHash("sha256").update(signals).digest("hex").slice(0, 8);
+}
 
 async function searchMarketplace(query: string): Promise<MarketplaceSkill[]> {
 	try {
@@ -1548,19 +1574,39 @@ async function runProjectSetup(ctx: {
 
 export default function (pi: ExtensionAPI) {
 	pi.on("session_start", async (_event, ctx) => {
+		const verbosity = getVerbosity(ctx.cwd);
+		if (verbosity === "off") return;
+
 		const stack = detectStack(ctx.cwd);
 		if (!stack || stack.profile === "unknown") return;
 
-		const suggestions = await buildSuggestions(stack);
-		const mcpSuggestions = buildMcpSuggestions(stack, ctx.cwd);
-		const capabilities = detectCapabilities(ctx.cwd, stack);
-		const report = buildReport(
-			stack,
-			suggestions,
-			mcpSuggestions,
-			capabilities,
-		);
-		ctx.ui.notify(report, "info");
+		const currentHash = computeSignalsHash(stack);
+		const state = readState(ctx.cwd);
+
+		const profileChanged = !state || state.lastProfile !== stack.profile;
+		const signalsChanged = !state || state.lastSignalsHash !== currentHash;
+		const shouldNotify = profileChanged || signalsChanged;
+
+		if (verbosity === "full") {
+			const suggestions = await buildSuggestions(stack);
+			const mcpSuggestions = buildMcpSuggestions(stack, ctx.cwd);
+			const capabilities = detectCapabilities(ctx.cwd, stack);
+			ctx.ui.notify(
+				buildReport(stack, suggestions, mcpSuggestions, capabilities),
+				"info",
+			);
+		} else if (shouldNotify) {
+			ctx.ui.notify(
+				`[@easii/pi] ${PROFILE_LABELS[stack.profile]} detected — run /easii:stack for suggestions.`,
+				"info",
+			);
+		}
+
+		writeState(ctx.cwd, {
+			lastProfile: stack.profile,
+			lastSignalsHash: currentHash,
+			lastSeen: new Date().toISOString(),
+		});
 	});
 
 	pi.registerCommand("easii:stack", {
