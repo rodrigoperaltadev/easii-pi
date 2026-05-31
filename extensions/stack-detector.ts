@@ -26,7 +26,7 @@ import type {
 
 // Types now live in extensions/types/ — see extensions/types/index.ts
 
-// ─── Detección de stack ───────────────────────────────────────────────────────
+// ─── Stack Detection ───────────────────────────────────────────────────────
 
 function readPackageJson(cwd: string): Record<string, unknown> | null {
 	try {
@@ -225,13 +225,13 @@ function detectStack(cwd: string): DetectedStack | null {
 	};
 }
 
-// ─── Búsqueda en marketplace ──────────────────────────────────────────────────
+// ─── Marketplace Search ─────────────────────────────────────────────────────
 
 const MARKETPLACE_API = "https://openagentskill.com/api/agent";
 
-// Mínimo de downloads para considerar una skill del marketplace confiable
+// Minimum downloads to consider a marketplace skill trustworthy
 const MIN_DOWNLOADS = 500;
-// Mínimo de rating (sobre 5)
+// Minimum rating (out of 5)
 const MIN_RATING = 3.5;
 
 async function searchMarketplace(query: string): Promise<MarketplaceSkill[]> {
@@ -266,7 +266,7 @@ async function searchMarketplace(query: string): Promise<MarketplaceSkill[]> {
 	}
 }
 
-// ─── Queries por perfil ───────────────────────────────────────────────────────
+// ─── Profile Queries ───────────────────────────────────────────────────────
 
 function getMarketplaceQueries(stack: DetectedStack): string[] {
 	switch (stack.profile) {
@@ -331,7 +331,7 @@ function getLocalFallbacks(stack: DetectedStack): LocalSkill[] {
 	return local;
 }
 
-// ─── Búsqueda combinada ───────────────────────────────────────────────────────
+// ─── Combined Search ───────────────────────────────────────────────────────
 
 async function buildSuggestions(
 	stack: DetectedStack,
@@ -341,7 +341,7 @@ async function buildSuggestions(
 
 	if (queries.length === 0) return localFallbacks;
 
-	// Buscar en marketplace (primer query del perfil)
+	// Search marketplace (first query for the profile)
 	const marketplaceResults = await searchMarketplace(queries[0]);
 
 	if (marketplaceResults.length > 0) {
@@ -349,7 +349,7 @@ async function buildSuggestions(
 		// Agregamos skills locales si no hay overlap de tema
 		const combined: SkillSuggestion[] = [...marketplaceResults];
 
-		// Siempre agregar skills locales de Easii al final como "conocimiento específico"
+		// Always append Easii local skills at the end as "specific knowledge"
 		for (const local of localFallbacks) {
 			const alreadyCovered = marketplaceResults.some((m) =>
 				m.name.toLowerCase().includes(local.skillName.replace(/-/g, " ")),
@@ -360,11 +360,11 @@ async function buildSuggestions(
 		return combined;
 	}
 
-	// Sin resultados útiles en marketplace → usar skills locales
+	// No useful results from marketplace → use local skills
 	return localFallbacks;
 }
 
-// ─── Sugerencias de MCP ───────────────────────────────────────────────────────
+// ─── MCP Suggestions ───────────────────────────────────────────────────────
 
 function hasDep(deps: string[], name: string): boolean {
 	return deps.includes(name);
@@ -397,7 +397,7 @@ function readConfiguredMcpServerKeys(cwd: string): Set<string> {
 				keys.add(key.toLowerCase());
 			}
 		} catch {
-			// config inválido — ignorar
+			// invalid config — skip
 		}
 	}
 	return keys;
@@ -452,7 +452,7 @@ function getMcpCatalog(stack: DetectedStack, cwd: string): McpSuggestion[] {
 				url: "https://mcp.supabase.com/mcp?read_only=true",
 			},
 			setupHint:
-				"OAuth al conectar. Agregá project_ref si querés acotar a un proyecto.",
+				"OAuth when connecting. Add project_ref to scope to a specific project.",
 		});
 	}
 
@@ -460,7 +460,7 @@ function getMcpCatalog(stack: DetectedStack, cwd: string): McpSuggestion[] {
 		catalog.push({
 			serverKey: "dart",
 			name: "Dart MCP",
-			reason: "Flutter/Dart: análisis, tests, pub y tooling del SDK",
+			reason: "Flutter/Dart: analysis, tests, pub and SDK tooling",
 			config: {
 				command: "dart",
 				args: [
@@ -485,8 +485,8 @@ function getMcpCatalog(stack: DetectedStack, cwd: string): McpSuggestion[] {
 				env: { DATABASE_URL: "${DATABASE_URL}" },
 				lifecycle: "lazy",
 			},
-			setupHint: "Definí DATABASE_URL en tu entorno o en env del server.",
-		});
+			setupHint: "Define DATABASE_URL in your environment or in the server env.",
+			});
 	} else if (
 		hasDep(deps, "pg") ||
 		hasDep(deps, "postgres") ||
@@ -496,14 +496,14 @@ function getMcpCatalog(stack: DetectedStack, cwd: string): McpSuggestion[] {
 		catalog.push({
 			serverKey: "postgres",
 			name: "PostgreSQL MCP",
-			reason: "Consultas SQL y exploración de schema",
+			reason: "SQL queries and schema exploration",
 			config: {
 				command: "npx",
 				args: ["-y", "@modelcontextprotocol/server-postgres"],
 				env: { DATABASE_URL: "${DATABASE_URL}" },
 				lifecycle: "lazy",
 			},
-			setupHint: "Definí DATABASE_URL en tu entorno o en env del server.",
+			setupHint: "Define DATABASE_URL in your environment or in the server env.",
 		});
 	}
 
@@ -515,7 +515,7 @@ function getMcpCatalog(stack: DetectedStack, cwd: string): McpSuggestion[] {
 		catalog.push({
 			serverKey: "playwright",
 			name: "Playwright MCP",
-			reason: "Automatización de browser para E2E y debugging visual",
+			reason: "Browser automation for E2E and visual debugging",
 			config: {
 				command: "npx",
 				args: ["-y", "@playwright/mcp@latest"],
@@ -553,7 +553,7 @@ function getMcpCatalog(stack: DetectedStack, cwd: string): McpSuggestion[] {
 				env: { STRIPE_SECRET_KEY: "${STRIPE_SECRET_KEY}" },
 				lifecycle: "lazy",
 			},
-			setupHint: "Definí STRIPE_SECRET_KEY en tu entorno.",
+			setupHint: "Define STRIPE_SECRET_KEY in your environment.",
 		});
 	}
 
@@ -565,7 +565,7 @@ function getMcpCatalog(stack: DetectedStack, cwd: string): McpSuggestion[] {
 		catalog.push({
 			serverKey: "context7",
 			name: "Context7 MCP",
-			reason: "Docs actualizadas de frameworks y librerías del stack web/Node",
+			reason: "Updated docs for web/Node stack frameworks and libraries",
 			config: {
 				command: "npx",
 				args: [
@@ -597,7 +597,7 @@ function buildMcpSuggestions(
 	});
 }
 
-// ─── Auditoría de capacidades ────────────────────────────────────────────────
+// ─── Capability Audit ────────────────────────────────────────────────
 
 function readTextIfExists(filePath: string): string {
 	try {
@@ -652,7 +652,7 @@ function detectStrictTdd(configText: string): ProjectCapability {
 		};
 	}
 	if (strictEnabled || hasTestCommand) {
-		return { status: "detected-partial", summary: "configuración TDD parcial" };
+		return { status: "detected-partial", summary: "partial TDD configuration" };
 	}
 	return { status: "missing", summary: "strict_tdd no configurado" };
 }
@@ -788,7 +788,7 @@ function detectCapabilities(
 	};
 }
 
-// ─── Reporte ──────────────────────────────────────────────────────────────────
+// ─── Report ──────────────────────────────────────────────────────────────────
 
 const PROFILE_LABELS: Record<ProjectProfile, string> = {
 	"react-native-expo": "React Native + Expo",
@@ -796,7 +796,7 @@ const PROFILE_LABELS: Record<ProjectProfile, string> = {
 	nextjs: "Next.js",
 	"react-web": "React Web",
 	"node-backend": "Node.js Backend",
-	"npm-library": "Librería npm",
+	"npm-library": "npm library",
 	"gamedev-phaser": "Videojuego (Phaser)",
 	"gamedev-pixi": "Videojuego (PixiJS)",
 	unknown: "Proyecto desconocido",
@@ -845,7 +845,7 @@ function buildReport(
 	capabilities?: ProjectCapabilities,
 ): string {
 	const lines: string[] = [
-		`${color("[@easii/pi]", "cyan")} ${color("Stack detectado", "bold")}: ${color(PROFILE_LABELS[stack.profile], "green")}`,
+		`${color("[@easii/pi]", "cyan")} ${color("Stack detected", "bold")}: ${color(PROFILE_LABELS[stack.profile], "green")}`,
 	];
 
 	if (stack.hasTypeScript) lines.push(`  ${color("✓", "green")} TypeScript`);
@@ -863,7 +863,7 @@ function buildReport(
 	if (capabilities) {
 		lines.push("");
 		lines.push(
-			color("Capacidades detectadas", "magenta") + color(" — read-only", "dim"),
+			color("Detected capabilities", "magenta") + color(" — read-only", "dim"),
 		);
 		lines.push(formatCapability("Unit tests", capabilities.unitTests));
 		lines.push(formatCapability("E2E", capabilities.e2eTests));
@@ -878,8 +878,8 @@ function buildReport(
 	if (suggestions.length > 0) {
 		lines.push("");
 		lines.push(
-			color("Skills sugeridas", "magenta") +
-				color(" — ya aplican a este stack", "dim"),
+			color("Suggested skills", "magenta") +
+				color(" — already applicable to this stack", "dim"),
 		);
 
 		for (const s of suggestions) {
@@ -887,7 +887,7 @@ function buildReport(
 				lines.push(
 					`  ${color("→", "yellow")} ${color("[marketplace]", "dim")} ${s.name}  ★${s.rating.toFixed(1)}  (${s.downloads.toLocaleString()} installs)`,
 				);
-				lines.push(`     Instalar: ${s.installCmd}`);
+				lines.push(`     Install: ${s.installCmd}`);
 				if (s.description) lines.push(color(`     ${s.description}`, "dim"));
 			} else {
 				lines.push(
@@ -900,8 +900,8 @@ function buildReport(
 	if (mcpSuggestions.length > 0) {
 		lines.push("");
 		lines.push(
-			color("MCPs sugeridos", "magenta") +
-				color(" — entradas para mcpServers en .mcp.json o .pi/mcp.json", "dim"),
+			color("Suggested MCPs", "magenta") +
+				color(" — entries for mcpServers in .mcp.json or .pi/mcp.json", "dim"),
 		);
 		for (const mcp of mcpSuggestions) {
 			lines.push(
@@ -912,7 +912,7 @@ function buildReport(
 		}
 		lines.push(
 			color(
-				"  Tip: con pi-mcp-adapter, usá /mcp setup para importar configs existentes.",
+				"  Tip: with pi-mcp-adapter, use /mcp setup to import existing configs.",
 				"dim",
 			),
 		);
@@ -921,7 +921,7 @@ function buildReport(
 	return lines.join("\n");
 }
 
-// ─── Setup de proyecto (schema SDD) ───────────────────────────────────────────
+// ─── Project Setup (SDD schema) ───────────────────────────────────────────
 
 const SCHEMA_BY_PROFILE: Partial<Record<ProjectProfile, string>> = {
 	"react-native-expo": "rn-feature",
@@ -1121,14 +1121,14 @@ async function applyDetectedSddHints(
 	if (existingBlock && existingBlock !== block) {
 		const ok = await confirmOrAbort(
 			ui,
-			"Actualizar hints SDD",
-			"openspec/config.yaml ya tiene un bloque @easii/pi. ¿Recalcularlo con el stack detectado? Los cambios manuales dentro de ese bloque se reemplazan.",
+			"Update SDD hints",
+			"openspec/config.yaml already has a @easii/pi block. Recalculate with detected stack? Manual changes inside that block will be replaced.",
 		);
 		if (ok) {
 			content = content.replace(managedBlockPattern, block);
-			blockStatus = "stack actualizado";
+			blockStatus = "stack updated";
 		} else {
-			blockStatus = "bloque @easii/pi no modificado";
+			blockStatus = "@easii/pi block not modified";
 		}
 	} else if (!hadManagedBlock) {
 		content = `${content.trimEnd()}\n\n${block}\n`;
@@ -1180,24 +1180,24 @@ async function ensureSchemaInConfig(
 
 	if (match) {
 		const current = match[1].trim();
-		if (current === schemaName) return "sin cambios (schema ya correcto)";
+		if (current === schemaName) return "no changes (schema already correct)";
 
 		const ok = await confirmOrAbort(
 			ui,
-			"Cambiar schema SDD",
-			`openspec/config.yaml tiene schema: ${current}. ¿Cambiar a ${schemaName}?`,
+			"Change SDD schema",
+			`openspec/config.yaml has schema: ${current}. Change to ${schemaName}?`,
 		);
-		if (!ok) return "schema no modificado";
+		if (!ok) return "schema not modified";
 
 		fs.writeFileSync(
 			configPath,
 			content.replace(/^schema:\s*.+$/m, `schema: ${schemaName}`),
 		);
-		return `actualizado (${current} → ${schemaName})`;
+		return `updated (${current} → ${schemaName})`;
 	}
 
 	fs.writeFileSync(configPath, `schema: ${schemaName}\n${content}`);
-	return "schema agregado";
+	return "schema added";
 }
 
 async function confirmOrAbort(
@@ -1208,7 +1208,7 @@ async function confirmOrAbort(
 	if (typeof ui.confirm === "function") return ui.confirm(title, message);
 
 	ui.notify(
-		`[@easii/pi] ${title}: acción cancelada porque esta versión de Pi no expone ctx.ui.confirm. ${message}`,
+		`[@easii/pi] ${title}: action cancelled because this version of Pi does not expose ctx.ui.confirm. ${message}`,
 		"warning",
 	);
 	return false;
@@ -1257,13 +1257,13 @@ async function collectSetupPreferences(
 		recommendedActions.length > 0
 			? await confirmOrAbort(
 					ui,
-					"Recomendaciones de setup",
+"Setup recommendations",
 					[
-						"Detecté capacidades faltantes. ¿Aplicar estas recomendaciones en openspec/config.yaml?",
+						"Found missing capabilities. Apply these recommendations to openspec/config.yaml?",
 						"",
 						...recommendedActions.map((action) => `- ${action}`),
 						"",
-						"Si preferís decidir cada punto manualmente, elegí No.",
+						"If you prefer to decide each point manually, choose No.",
 					].join("\n"),
 				)
 			: false;
@@ -1361,7 +1361,7 @@ async function runProjectSetup(ctx: {
 	const stack = detectStack(ctx.cwd);
 	if (!stack || stack.profile === "unknown") {
 		ctx.ui.notify(
-			"[@easii/pi] No se detectó stack compatible. ¿Hay un package.json en este directorio?",
+			"[@easii/pi] No compatible stack detected. Is there a package.json in this directory?",
 			"warning",
 		);
 		return;
@@ -1370,7 +1370,7 @@ async function runProjectSetup(ctx: {
 	const schemaName = SCHEMA_BY_PROFILE[stack.profile];
 	if (!schemaName) {
 		ctx.ui.notify(
-			`[@easii/pi] Todavía no hay schema SDD para ${PROFILE_LABELS[stack.profile]}. Usá gentle-pi /sdd-init por ahora.`,
+			`[@easii/pi] No SDD schema available yet for ${PROFILE_LABELS[stack.profile]}. Use gentle-pi /sdd-init for now.`,
 			"info",
 		);
 		return;
@@ -1384,7 +1384,7 @@ async function runProjectSetup(ctx: {
 	);
 	if (!fs.existsSync(path.join(sourceDir, "schema.yaml"))) {
 		ctx.ui.notify(
-			`[@easii/pi] No se encontró el schema en el paquete: ${sourceDir}`,
+			`[@easii/pi] Schema not found in package: ${sourceDir}`,
 			"error",
 		);
 		return;
@@ -1398,24 +1398,24 @@ async function runProjectSetup(ctx: {
 
 	const okToSetup = await confirmOrAbort(
 		ctx.ui,
-		"Configurar proyecto con @easii/pi",
+		"Configure project with @easii/pi",
 		[
-			`Stack detectado: ${PROFILE_LABELS[stack.profile]}`,
-			`Schema SDD sugerido: ${schemaName}`,
+			`Stack detected: ${PROFILE_LABELS[stack.profile]}`,
+			`Suggested SDD schema: ${schemaName}`,
 			"",
-			"Esto va a:",
-			`${destExists ? "- reemplazar" : "- copiar"} openspec/schemas/${schemaName}/`,
-			`${fs.existsSync(configPath) ? "- actualizar" : "- crear"} openspec/config.yaml`,
-			"- agregar hints de stack para /sdd-init",
+			"This will:",
+			`${destExists ? "- replace" : "- copy"} openspec/schemas/${schemaName}/`,
+			`${fs.existsSync(configPath) ? "- update" : "- create"} openspec/config.yaml`,
+			"- add stack hints for /sdd-init",
 			commands.testCommand
-				? `- usar test_command inferido: ${commands.testCommand}`
-				: "- dejar test_command vacío porque no hay runner confiable",
+				? `- use inferred test_command: ${commands.testCommand}`
+				: "- leave test_command empty because no reliable runner",
 			"",
-			"¿Continuar?",
+			"Continue?",
 		].join("\n"),
 	);
 	if (!okToSetup) {
-		ctx.ui.notify("[@easii/pi] Setup cancelado.", "info");
+		ctx.ui.notify("[@easii/pi] Setup cancelled.", "info");
 		return;
 	}
 
@@ -1429,11 +1429,11 @@ async function runProjectSetup(ctx: {
 	if (destExists) {
 		const ok = await confirmOrAbort(
 			ctx.ui,
-			"Reemplazar schema",
-			`${schemaName} ya existe en openspec/schemas/. ¿Reemplazar con la versión de @easii/pi?`,
+			"Replace schema",
+			`${schemaName} already exists in openspec/schemas/. Replace with @easii/pi version?`,
 		);
-		if (!ok) {
-			ctx.ui.notify("[@easii/pi] Setup cancelado.", "info");
+if (!ok) {
+			ctx.ui.notify("[@easii/pi] Setup cancelled.", "info");
 			return;
 		}
 		fs.rmSync(destDir, { recursive: true, force: true });
@@ -1464,20 +1464,20 @@ async function runProjectSetup(ctx: {
 	);
 
 	const report = [
-		`[@easii/pi] Proyecto configurado con schema: ${schemaName}`,
-		`  ✓ Copiado a openspec/schemas/${schemaName}/`,
+		`[@easii/pi] Project configured with schema: ${schemaName}`,
+		`  ✓ Copied to openspec/schemas/${schemaName}/`,
 		`  ✓ openspec/config.yaml — ${configStatus}`,
 		`  ✓ strict TDD — ${strictTddStatus}`,
-		`  ✓ hints para /sdd-init — ${sddHintsStatus}`,
+		`  ✓ hints for /sdd-init — ${sddHintsStatus}`,
 		"",
-		"Próximo paso: /sdd-new <nombre-cambio> para empezar una feature.",
-		"Opcional: /sdd-init para revisar/ajustar runners de test y reglas SDD.",
+		"Next: /sdd-new <change-name> to start a feature.",
+		"Optional: /sdd-init to review/adjust test runners and SDD rules.",
 	].join("\n");
 
 	ctx.ui.notify(report, "info");
 }
 
-// ─── Extensión ────────────────────────────────────────────────────────────────
+// ─── Extension ────────────────────────────────────────────────────────────────
 
 export default function (pi: ExtensionAPI) {
 	pi.on("session_start", async (_event, ctx) => {
@@ -1498,19 +1498,19 @@ export default function (pi: ExtensionAPI) {
 
 	pi.registerCommand("easii:stack", {
 		description:
-			"Detectar stack, auditar capacidades y sugerir skills/MCPs relevantes",
+			"Detect stack, audit capabilities and suggest relevant skills/MCPs",
 		handler: async (_args, ctx) => {
 			const stack = detectStack(ctx.cwd);
 
 			if (!stack || stack.profile === "unknown") {
 				ctx.ui.notify(
-					"[@easii/pi] No se pudo detectar el stack. ¿Hay un package.json en este directorio?",
+					"[@easii/pi] Could not detect stack. Is there a package.json in this directory?",
 					"warning",
 				);
 				return;
 			}
 
-			ctx.ui.notify("[@easii/pi] Buscando skills en marketplace...", "info");
+			ctx.ui.notify("[@easii/pi] Searching skills in marketplace...", "info");
 			const suggestions = await buildSuggestions(stack);
 			const mcpSuggestions = buildMcpSuggestions(stack, ctx.cwd);
 			const capabilities = detectCapabilities(ctx.cwd, stack);
@@ -1526,7 +1526,7 @@ export default function (pi: ExtensionAPI) {
 
 	pi.registerCommand("easii:setup-project", {
 		description:
-			"Copiar el schema SDD correcto según el stack detectado (openspec/schemas + config.yaml)",
+			"Copy the correct SDD schema based on detected stack (openspec/schemas + config.yaml)",
 		handler: async (_args, ctx) => {
 			await runProjectSetup(ctx);
 		},
