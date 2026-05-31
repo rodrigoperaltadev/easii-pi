@@ -1,57 +1,72 @@
 # @easii/pi
 
-**Stack-aware Pi harness para frontend, mobile y game development.**
+**Stack-aware Pi harness for frontend, mobile and game development.**
 
-Paquete Pi de [Easii Studio](https://github.com/easii-studio) que detecta automáticamente el stack tecnológico de tu proyecto y sugiere skills, MCPs y flujos SDD relevantes.
+Pi package from [Easii Studio](https://github.com/easii-studio) that automatically detects your project tech stack and suggests relevant skills, MCPs and SDD flows.
 
-## Instalación
+## Standalone or with gentle-pi?
+
+**Works standalone with vanilla Pi.** No dependencies required.
+
+Gentle-pi adds SDD/OpenSpec workflows on top. @easii/pi integrates with it by:
+- Pre-populating `openspec/config.yaml` with detected stack hints when `/sdd-init` runs
+- Suggesting the `rn-feature` schema for React Native projects
+- Providing capability audit that gentle-pi can forward to its skill registry
+
+If you use gentle-pi:
+```bash
+pi install npm:@easii/pi npm:gentle-pi
+```
+
+If you use vanilla Pi:
+```bash
+pi install npm:@easii/pi
+```
+
+## Installation
 
 ```bash
 pi install npm:@easii/pi
 ```
 
-### Compañeros recomendados
+### Recommended companions (optional)
 
 ```bash
-pi install npm:gentle-pi          # harness SDD base (opcional pero recomendado)
-pi install npm:gentle-engram      # memoria persistente entre sesiones
-pi install npm:@juicesharp/rpiv-ask-user-question
+pi install npm:gentle-engram                # persistent memory across sessions
+pi install npm:@juicesharp/rpiv-ask-user-question  # structured dialogs
 ```
 
-## Qué incluye
+## What it includes
 
 ### Stack Detector
 
-En cada `session_start`, el paquete lee el `package.json` del proyecto y detecta:
+On every `session_start`, the package reads your `package.json` and detects:
 
-- **React Native + Expo** → activa skills de Expo, RN y E2E
-- **React Native bare** → activa skill de RN
-- **Next.js** → (próximamente)
-- **Videojuegos (Phaser/PixiJS)** → (próximamente)
+| Profile | Trigger |
+|---------|---------|
+| `react-native-expo` | `expo` dependency |
+| `react-native-bare` | `react-native` without expo |
+| `nextjs` | `next` dependency |
+| `react-web` | `react` without RN |
+| `node-backend` | `main` field, no react |
+| `npm-library` | `types` or `files` field |
+| `gamedev-phaser` | `phaser` dependency |
+| `gamedev-pixi` | `pixi.js` dependency |
+| `unknown` | none of the above |
 
-Podés re-correr la detección manualmente con:
+Manual re-run:
 
 ```
 /easii:stack
 ```
 
-El reporte incluye:
+### Built-in skills
 
-- perfil detectado con jerarquía visual por color
-- capacidades read-only: unit tests, E2E, strict TDD, CI, CD/deploy y Docker cuando aplica
-- skills sugeridas desde marketplace + fallback local, solo cuando aplican al stack detectado
-- MCPs sugeridos según dependencias/config real del proyecto
-- hints de testing y E2E cuando el proyecto los expone
-
-### Skills incluidas
-
-| Skill | Cuándo se usa |
-|---|---|
-| `expo` | Proyectos con Expo SDK, EAS Build, Expo Router |
-| `react-native` | Testing RN, componentes, performance, diferencias iOS/Android |
-| `rn-e2e-maestro` | Flujos E2E; solo se sugiere si existen `@maestro/cli` o `.maestro/` |
-
-Cargar una skill manualmente:
+| Skill | When |
+|-------|------|
+| `expo` | Expo SDK, EAS Build, Expo Router, managed/bare |
+| `react-native` | Testing, components, performance, iOS/Android differences |
+| `rn-e2e-maestro` | E2E flows; only suggested if `@maestro/cli` or `.maestro/` exists |
 
 ```
 /skill:expo
@@ -59,86 +74,166 @@ Cargar una skill manualmente:
 /skill:rn-e2e-maestro
 ```
 
-### MCPs sugeridos
+### Suggested MCPs
 
-`/easii:stack` sugiere MCPs relevantes y evita repetir los que ya estén en `.mcp.json` o `.pi/mcp.json`.
-
-Ejemplos actuales:
+`/easii:stack` suggests MCPs based on your deps and avoids duplicates in `.mcp.json` / `.pi/mcp.json`.
 
 | Trigger | MCP |
-|---|---|
+|---------|-----|
 | Expo | Expo MCP |
 | `@supabase/*` | Supabase MCP |
 | Playwright | Playwright MCP |
-| Prisma/Postgres deps | PostgreSQL MCP |
+| Prisma / Postgres deps | PostgreSQL MCP |
 | Firebase | Firebase MCP |
 | Stripe | Stripe MCP |
-| Next/React/Node | Context7 MCP |
+| Next / React / Node | Context7 MCP |
 
-### Schema `rn-feature` y setup SDD
+## Schema `rn-feature` and SDD setup
 
-Flujo SDD adaptado para features de React Native:
+SDD flow tailored for React Native features:
 
 ```
 proposal → specs → design → tasks → apply
 ```
 
-Con templates que incluyen:
-- Consideraciones de plataforma (iOS/Android)
-- Estrategia de testing (unit + E2E opcional)
-- Checklist de PR
+Includes:
+- Platform considerations (iOS/Android)
+- Testing strategy (unit + optional E2E)
+- PR checklist
 
-Para configurar un proyecto RN/Expo:
+For React Native / Expo projects:
 
 ```
 /easii:setup-project
 ```
 
-El comando muestra primero un resumen interactivo y pide confirmación. Si aceptás, hace una única pregunta de recomendaciones para capacidades faltantes que aplican al perfil:
+This command:
+1. Shows interactive summary, asks confirmation
+2. If confirmed, asks about missing capabilities (strict TDD, E2E, CI/CD, Docker)
+3. Copies `assets/schemas/rn-feature/` → `openspec/schemas/rn-feature/`
+4. Sets `schema: rn-feature` in `openspec/config.yaml`
+5. Adds managed block with detected stack and setup preferences for `/sdd-init`
+6. Infers `test_command`, E2E, typecheck, lint and format when scripts exist
 
-- strict TDD si hay `test_command` confiable y todavía no está activo
-- estrategia E2E recomendada si el stack la justifica
-- CI/CD como pendiente recomendado si no está detectado
-- Docker solo en perfiles web/backend donde aplica
+## Commands
 
-Luego:
+| Command | What |
+|---------|------|
+| `/easii:stack` | Detect stack, audit capabilities, suggest skills/MCPs |
+| `/easii:setup-project` | Configure OpenSpec for RN/Expo with `rn-feature` schema and hints for `/sdd-init` |
 
-- copia `assets/schemas/rn-feature/` a `openspec/schemas/rn-feature/`
-- setea `schema: rn-feature` en `openspec/config.yaml`
-- agrega un bloque administrado con stack detectado y preferencias de setup para `/sdd-init`
-- infiere `test_command`, E2E, typecheck, lint y format cuando existen scripts confiables
+## Usage examples
 
-## Comandos
+### `/easii:stack` output
 
-| Comando | Qué hace |
-|---|---|
-| `/easii:stack` | Detecta stack, audita capacidades read-only y sugiere skills/MCPs |
-| `/easii:setup-project` | Configura OpenSpec para RN/Expo con schema `rn-feature` y hints para `/sdd-init` |
+```
+[@easii/pi] Stack detected: React Native + Expo
+  ✓ TypeScript
+  ✓ Expo Router
+  ✓ EAS Build
+  ✓ Tests: vitest
 
-## Desarrollo local
+Detected capabilities — read-only
+  ✓ Unit tests: configured → vitest
+  ✓ E2E: configured → maestro test
+  ~ Strict TDD: detected without clear checks
+  ✓ CI: configured with quality checks
+  ~ CD/deploy: platform file detected
+
+Suggested skills — already applicable to this stack
+  → [marketplace] @expo/expo-hog   ★4.8  (12,400 installs)
+     Install: npx skills add expo/expo-hog
+     Expo-specific linting, type checking, and best practices
+
+  → [@easii/pi] /skill:expo  — Expo SDK, EAS Build, Expo Router, managed/bare
+  → [@easii/pi] /skill:react-native  — Testing, components, performance, iOS/Android differences
+
+Suggested MCPs — entries for mcpServers in .mcp.json or .pi/mcp.json
+  → Expo MCP  — SDK docs, simulator and local Expo flows
+     { "command": "npx", "args": ["-y", "expo-mcp@latest"], "lifecycle": "lazy" }
+     Tip: with pi-mcp-adapter, use /mcp setup to import existing configs.
+```
+
+### `/easii:setup-project` interaction
+
+```
+/easii:setup-project
+
+[@easii/pi] OpenSpec setup for React Native + Expo
+
+Current state:
+  schema: not configured
+  test_command: "vitest"
+  e2e: maestro detected (maestro test)
+  typecheck: "npx tsc --noEmit"
+  strict_tdd: not configured (available to enable)
+  ci: github workflows detected
+
+Recommendations for your profile:
+  • strict_tdd: enable (vitest detected, not configured in openspec/config.yaml)
+  • e2e: keep maestro (already detected)
+  • ci: keep github workflows (already configured)
+  • cd: pending (no deploy workflow detected)
+
+Configure OpenSpec? [y/N]:
+```
+
+### Skills auto-suggested by stack
+
+When your project has Expo:
+
+```
+Suggested skills — already applicable to this stack
+  → [@easii/pi] /skill:expo  — Expo SDK, EAS Build, Expo Router, managed/bare
+  → [@easii/pi] /skill:react-native  — Testing, components, performance, iOS/Android differences
+```
+
+When Maestro is detected:
+
+```
+  → [@easii/pi] /skill:rn-e2e-maestro  — E2E flows with Maestro detected in the project
+```
+
+### Capabilities read-only audit
+
+```
+Detected capabilities — read-only
+  ✓ Unit tests: configured → vitest run
+     (vitest detected via script)
+
+  ✓ E2E: configured → maestro test
+     (maestro detected via script)
+
+  ~ Strict TDD: detected without clear checks
+
+  ✓ CI: configured with quality checks
+
+  ~ CD/deploy: platform file detected
+
+  – Docker: not evaluated for this profile
+     (not applicable for react-native-expo)
+```
+
+## Development
 
 ```bash
-# Clonar el repo
-git clone https://github.com/easii-studio/pi
-cd pi
-
-# Instalar en Pi desde el path local
+# Install locally for testing
 pi install .
 
-# Testear sin instalar
+# Test extension without installing
 pi -e ./extensions/stack-detector.ts
 
-# Verificar TypeScript
+# TypeScript check
 npx tsc --noEmit
 
-# Revisar qué se publicaría en npm
+# Preview what would be published to npm
 npm pack --dry-run
 ```
 
-## Contribuir
+## Contributing
 
-Issues y PRs bienvenidos en [github.com/easii-studio/pi](https://github.com/easii-studio/pi).
+Issues and PRs welcome at [github.com/easii-studio/pi](https://github.com/easii-studio/pi).
 
-## Licencia
+## License
 
 MIT — Easii Studio
