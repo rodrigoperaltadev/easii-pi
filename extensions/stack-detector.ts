@@ -62,37 +62,37 @@ function detectPackageManager(cwd: string): PackageManager {
 	return "npm";
 }
 
-function commandForScript(
-	packageManager: PackageManager,
-	scriptName: string,
-): string {
-	switch (packageManager) {
+function commandForScript(opts: {
+	packageManager: PackageManager;
+	scriptName: string;
+}): string {
+	switch (opts.packageManager) {
 		case "pnpm":
-			return `pnpm ${scriptName}`;
+			return `pnpm ${opts.scriptName}`;
 		case "yarn":
-			return `yarn ${scriptName}`;
+			return `yarn ${opts.scriptName}`;
 		case "bun":
-			return `bun run ${scriptName}`;
+			return `bun run ${opts.scriptName}`;
 		case "npm":
 		default:
-			return `npm run ${scriptName}`;
+			return `npm run ${opts.scriptName}`;
 	}
 }
 
-function commandForBinary(
-	packageManager: PackageManager,
-	binary: string,
-): string {
-	switch (packageManager) {
+function commandForBinary(opts: {
+	packageManager: PackageManager;
+	binary: string;
+}): string {
+	switch (opts.packageManager) {
 		case "pnpm":
-			return `pnpm exec ${binary}`;
+			return `pnpm exec ${opts.binary}`;
 		case "yarn":
-			return `yarn ${binary}`;
+			return `yarn ${opts.binary}`;
 		case "bun":
-			return `bunx ${binary}`;
+			return `bunx ${opts.binary}`;
 		case "npm":
 		default:
-			return `npx ${binary}`;
+			return `npx ${opts.binary}`;
 	}
 }
 
@@ -137,25 +137,30 @@ function inferProjectCommands(
 	const formatScript = findScript(scripts, ["format", "prettier"]);
 
 	let unitCommand = unitScript
-		? commandForScript(packageManager, unitScript)
+		? commandForScript({ packageManager, scriptName: unitScript })
 		: "";
 	if (!unitCommand && stack.testFramework === "jest")
-		unitCommand = commandForBinary(packageManager, "jest");
+		unitCommand = commandForBinary({ packageManager, binary: "jest" });
 	if (!unitCommand && stack.testFramework === "vitest")
-		unitCommand = commandForBinary(packageManager, "vitest run");
+		unitCommand = commandForBinary({ packageManager, binary: "vitest run" });
 
-	let e2eCommand = e2eScript ? commandForScript(packageManager, e2eScript) : "";
+	let e2eCommand = e2eScript
+		? commandForScript({ packageManager, scriptName: e2eScript })
+		: "";
 	if (!e2eCommand && stack.e2eFramework === "maestro")
 		e2eCommand = "maestro test .maestro";
 	if (!e2eCommand && stack.e2eFramework === "playwright")
-		e2eCommand = commandForBinary(packageManager, "playwright test");
+		e2eCommand = commandForBinary({
+			packageManager,
+			binary: "playwright test",
+		});
 	if (!e2eCommand && stack.e2eFramework === "detox")
-		e2eCommand = commandForBinary(packageManager, "detox test");
+		e2eCommand = commandForBinary({ packageManager, binary: "detox test" });
 
 	const typecheckCommand = typecheckScript
-		? commandForScript(packageManager, typecheckScript)
+		? commandForScript({ packageManager, scriptName: typecheckScript })
 		: stack.hasTypeScript
-			? commandForBinary(packageManager, "tsc --noEmit")
+			? commandForBinary({ packageManager, binary: "tsc --noEmit" })
 			: "";
 
 	return {
@@ -164,9 +169,11 @@ function inferProjectCommands(
 		unitCommand,
 		e2eCommand,
 		typecheckCommand,
-		lintCommand: lintScript ? commandForScript(packageManager, lintScript) : "",
+		lintCommand: lintScript
+			? commandForScript({ packageManager, scriptName: lintScript })
+			: "",
 		formatCommand: formatScript
-			? commandForScript(packageManager, formatScript)
+			? commandForScript({ packageManager, scriptName: formatScript })
 			: "",
 	};
 }
@@ -485,8 +492,9 @@ function getMcpCatalog(stack: DetectedStack, cwd: string): McpSuggestion[] {
 				env: { DATABASE_URL: "${DATABASE_URL}" },
 				lifecycle: "lazy",
 			},
-			setupHint: "Define DATABASE_URL in your environment or in the server env.",
-			});
+			setupHint:
+				"Define DATABASE_URL in your environment or in the server env.",
+		});
 	} else if (
 		hasDep(deps, "pg") ||
 		hasDep(deps, "postgres") ||
@@ -503,7 +511,8 @@ function getMcpCatalog(stack: DetectedStack, cwd: string): McpSuggestion[] {
 				env: { DATABASE_URL: "${DATABASE_URL}" },
 				lifecycle: "lazy",
 			},
-			setupHint: "Define DATABASE_URL in your environment or in the server env.",
+			setupHint:
+				"Define DATABASE_URL in your environment or in the server env.",
 		});
 	}
 
@@ -1101,7 +1110,7 @@ async function applyDetectedSddHints(
 	ui: SetupUi,
 	preferences?: SetupPreferences,
 ): Promise<string> {
-	if (!fs.existsSync(configPath)) return "sin cambios";
+	if (!fs.existsSync(configPath)) return "no changes";
 
 	const commands = inferProjectCommands(cwd, stack);
 	const block = buildEasiiDetectedConfigBlock(
@@ -1116,7 +1125,7 @@ async function applyDetectedSddHints(
 	let content = fs.readFileSync(configPath, "utf-8");
 	const existingBlock = getManagedEasiiBlock(content);
 	const hadManagedBlock = existingBlock !== null;
-	let blockStatus = hadManagedBlock ? "stack sin cambios" : "stack agregado";
+	let blockStatus = hadManagedBlock ? "stack unchanged" : "stack added";
 
 	if (existingBlock && existingBlock !== block) {
 		const ok = await confirmOrAbort(
@@ -1239,25 +1248,25 @@ async function collectSetupPreferences(
 	const recommendedActions: string[] = [];
 
 	if (capabilities.strictTdd.status !== "configured" && commands.testCommand) {
-		recommendedActions.push(`activar strict_tdd con ${commands.testCommand}`);
+		recommendedActions.push(`enable strict_tdd with ${commands.testCommand}`);
 	}
 	if (capabilities.e2eTests.status === "missing" && profileSupportsE2e(stack)) {
 		recommendedActions.push(
-			`marcar ${recommendedE2eTool(stack)} como estrategia E2E recomendada`,
+			`mark ${recommendedE2eTool(stack)} as recommended E2E strategy`,
 		);
 	}
 	if (capabilities.ci.status === "missing")
-		recommendedActions.push("marcar CI como pendiente recomendado");
+		recommendedActions.push("mark CI as pending recommendation");
 	if (capabilities.cd.status === "missing")
-		recommendedActions.push("marcar CD/deploy como pendiente recomendado");
+		recommendedActions.push("mark CD/deploy as pending recommendation");
 	if (capabilities.docker.status === "missing")
-		recommendedActions.push("marcar Docker como pendiente recomendado");
+		recommendedActions.push("mark Docker as pending recommendation");
 
 	const applyRecommendations =
 		recommendedActions.length > 0
 			? await confirmOrAbort(
 					ui,
-"Setup recommendations",
+					"Setup recommendations",
 					[
 						"Found missing capabilities. Apply these recommendations to openspec/config.yaml?",
 						"",
@@ -1327,7 +1336,7 @@ function applyStrictTddPreference(
 		!commands.testCommand ||
 		!fs.existsSync(configPath)
 	)
-		return "sin cambios";
+		return "no changes";
 
 	let content = fs.readFileSync(configPath, "utf-8");
 	content = /^strict_tdd:/m.test(content)
@@ -1432,7 +1441,7 @@ async function runProjectSetup(ctx: {
 			"Replace schema",
 			`${schemaName} already exists in openspec/schemas/. Replace with @easii/pi version?`,
 		);
-if (!ok) {
+		if (!ok) {
 			ctx.ui.notify("[@easii/pi] Setup cancelled.", "info");
 			return;
 		}
