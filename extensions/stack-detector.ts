@@ -444,7 +444,7 @@ function getMcpCatalog(stack: DetectedStack, cwd: string): McpSuggestion[] {
 		catalog.push({
 			serverKey: "expo",
 			name: "Expo MCP",
-			reason: "Docs del SDK, simulador y flujos locales de Expo",
+			reason: "SDK docs, simulator and local Expo flows",
 			config: {
 				command: "npx",
 				args: ["-y", "expo-mcp@latest"],
@@ -457,7 +457,7 @@ function getMcpCatalog(stack: DetectedStack, cwd: string): McpSuggestion[] {
 		catalog.push({
 			serverKey: "supabase",
 			name: "Supabase MCP",
-			reason: "Tablas, SQL, migraciones y config del proyecto Supabase",
+			reason: "Tables, SQL, migrations and config for Supabase project",
 			config: {
 				url: "https://mcp.supabase.com/mcp?read_only=true",
 			},
@@ -480,34 +480,26 @@ function getMcpCatalog(stack: DetectedStack, cwd: string): McpSuggestion[] {
 				],
 				lifecycle: "lazy",
 			},
-			setupHint: "Requiere Flutter/Dart SDK instalado.",
+			setupHint: "Requires Flutter/Dart SDK installed.",
 		});
 	}
 
-	if (hasDep(deps, "prisma") || hasDep(deps, "@prisma/client")) {
-		catalog.push({
-			serverKey: "postgres",
-			name: "PostgreSQL MCP",
-			reason: "Consultas y schema cuando Prisma apunta a Postgres",
-			config: {
-				command: "npx",
-				args: ["-y", "@modelcontextprotocol/server-postgres"],
-				env: { DATABASE_URL: "${DATABASE_URL}" },
-				lifecycle: "lazy",
-			},
-			setupHint:
-				"Define DATABASE_URL in your environment or in the server env.",
-		});
-	} else if (
+	if (
 		hasDep(deps, "pg") ||
 		hasDep(deps, "postgres") ||
 		hasDep(deps, "@neondatabase/serverless") ||
-		hasDep(deps, "drizzle-orm")
+		hasDep(deps, "drizzle-orm") ||
+		hasDep(deps, "prisma") ||
+		hasDep(deps, "@prisma/client")
 	) {
+		const hasPrisma =
+			hasDep(deps, "prisma") || hasDep(deps, "@prisma/client");
 		catalog.push({
 			serverKey: "postgres",
 			name: "PostgreSQL MCP",
-			reason: "SQL queries and schema exploration",
+			reason: hasPrisma
+				? "Queries and schema when Prisma targets Postgres"
+				: "SQL queries and schema exploration",
 			config: {
 				command: "npx",
 				args: ["-y", "@modelcontextprotocol/server-postgres"],
