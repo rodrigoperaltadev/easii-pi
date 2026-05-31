@@ -3,112 +3,28 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 import { fileURLToPath } from "node:url";
 
+import type {
+	ProjectProfile,
+	DetectedStack,
+	InferredProjectCommands,
+	PackageManager,
+	ProfileName,
+	MarketplaceSkill,
+	LocalSkill,
+	SkillSuggestion,
+	MarketplaceResult,
+	McpServerConfig,
+	McpSuggestion,
+	CapabilityStatus,
+	ProjectCapability,
+	ProjectCapabilities,
+	SetupPreferences,
+	SetupUi,
+} from "./types/index.js";
+
 // ─── Tipos ───────────────────────────────────────────────────────────────────
 
-type ProjectProfile =
-	| "react-native-expo"
-	| "react-native-bare"
-	| "nextjs"
-	| "react-web"
-	| "node-backend"
-	| "npm-library"
-	| "gamedev-phaser"
-	| "gamedev-pixi"
-	| "unknown";
-
-interface DetectedStack {
-	profile: ProjectProfile;
-	deps: string[];
-	hasTypeScript: boolean;
-	hasExpoRouter: boolean;
-	hasEAS: boolean;
-	testFramework: "jest" | "vitest" | "none";
-	e2eFramework: "maestro" | "detox" | "playwright" | "none";
-	stateManagement: string[];
-}
-
-interface MarketplaceSkill {
-	name: string;
-	slug: string;
-	installCmd: string;
-	downloads: number;
-	rating: number;
-	description: string;
-	source: "marketplace";
-}
-
-interface LocalSkill {
-	skillName: string;
-	reason: string;
-	source: "local";
-}
-
-type SkillSuggestion = MarketplaceSkill | LocalSkill;
-
-interface McpServerConfig {
-	command?: string;
-	args?: string[];
-	url?: string;
-	env?: Record<string, string>;
-	lifecycle?: "lazy" | "eager" | "keep-alive";
-}
-
-interface McpSuggestion {
-	serverKey: string;
-	name: string;
-	reason: string;
-	config: McpServerConfig;
-	setupHint?: string;
-}
-
-interface InferredProjectCommands {
-	packageManager: "npm" | "pnpm" | "yarn" | "bun";
-	testCommand: string;
-	unitCommand: string;
-	e2eCommand: string;
-	typecheckCommand: string;
-	lintCommand: string;
-	formatCommand: string;
-}
-
-type CapabilityStatus =
-	| "configured"
-	| "detected-partial"
-	| "missing"
-	| "not-applicable";
-
-interface ProjectCapability {
-	status: CapabilityStatus;
-	summary: string;
-	details?: string[];
-}
-
-interface ProjectCapabilities {
-	unitTests: ProjectCapability;
-	e2eTests: ProjectCapability;
-	strictTdd: ProjectCapability;
-	ci: ProjectCapability;
-	cd: ProjectCapability;
-	docker: ProjectCapability;
-}
-
-interface SetupPreferences {
-	strictTdd: "configured" | "enable" | "skip" | "missing-runner";
-	e2e:
-		| "configured"
-		| "detected-partial"
-		| "recommended"
-		| "skip"
-		| "not-applicable";
-	ci: "configured" | "detected-partial" | "recommended" | "skip";
-	cd: "configured" | "detected-partial" | "recommended" | "skip";
-	docker:
-		| "configured"
-		| "detected-partial"
-		| "recommended"
-		| "skip"
-		| "not-applicable";
-}
+// Types now live in extensions/types/ — see extensions/types/index.ts
 
 // ─── Detección de stack ───────────────────────────────────────────────────────
 
@@ -135,9 +51,7 @@ function getPackageScripts(cwd: string): Record<string, string> {
 	return scripts as Record<string, string>;
 }
 
-function detectPackageManager(
-	cwd: string,
-): InferredProjectCommands["packageManager"] {
+function detectPackageManager(cwd: string): PackageManager {
 	if (fs.existsSync(path.join(cwd, "pnpm-lock.yaml"))) return "pnpm";
 	if (fs.existsSync(path.join(cwd, "yarn.lock"))) return "yarn";
 	if (
@@ -149,7 +63,7 @@ function detectPackageManager(
 }
 
 function commandForScript(
-	packageManager: InferredProjectCommands["packageManager"],
+	packageManager: PackageManager,
 	scriptName: string,
 ): string {
 	switch (packageManager) {
@@ -166,7 +80,7 @@ function commandForScript(
 }
 
 function commandForBinary(
-	packageManager: InferredProjectCommands["packageManager"],
+	packageManager: PackageManager,
 	binary: string,
 ): string {
 	switch (packageManager) {
@@ -319,16 +233,6 @@ const MARKETPLACE_API = "https://openagentskill.com/api/agent";
 const MIN_DOWNLOADS = 500;
 // Mínimo de rating (sobre 5)
 const MIN_RATING = 3.5;
-
-interface MarketplaceResult {
-	slug: string;
-	name: string;
-	install_command?: string;
-	installCommand?: string;
-	downloads?: number;
-	rating?: number;
-	description?: string;
-}
 
 async function searchMarketplace(query: string): Promise<MarketplaceSkill[]> {
 	try {
@@ -753,7 +657,7 @@ function detectStrictTdd(configText: string): ProjectCapability {
 	return { status: "missing", summary: "strict_tdd no configurado" };
 }
 
-function dockerApplies(profile: ProjectProfile): boolean {
+function dockerApplies(profile: ProfileName): boolean {
 	return (
 		profile === "nextjs" ||
 		profile === "react-web" ||
@@ -1294,11 +1198,6 @@ async function ensureSchemaInConfig(
 
 	fs.writeFileSync(configPath, `schema: ${schemaName}\n${content}`);
 	return "schema agregado";
-}
-
-interface SetupUi {
-	confirm?: (title: string, message: string) => Promise<boolean>;
-	notify: (message: string, level: "info" | "warning" | "error") => void;
 }
 
 async function confirmOrAbort(

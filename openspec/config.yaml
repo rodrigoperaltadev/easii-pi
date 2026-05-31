@@ -1,4 +1,4 @@
-strict_tdd: false
+strict_tdd: true
 context: |
   @easii/pi is a Node.js/TypeScript, Pi extension package project.
   Detected markers: package.json, tsconfig.json, npm package manager.
@@ -17,36 +17,33 @@ rules:
   tasks:
     protect_review_workload: true
   apply:
-    test_command: ""
+    test_command: "vitest run --reporter=verbose"
   verify:
-    test_command: ""
+    test_command: "vitest run --reporter=verbose"
 testing:
   detected: "2026-05-30"
   runner:
-    command: ""
-    framework: ""
+    command: "vitest run --reporter=verbose"
+    framework: vitest
   layers:
-    unit: ""
+    unit: vitest run
     integration: ""
     e2e: ""
   commands:
     unit:
-      []
+      - vitest run --reporter=verbose
     integration:
-      []
+      - []
     e2e:
-      []
+      - []
   coverage:
-    command: ""
+    command: vitest run --coverage
     commands:
-      []
+      - vitest run --coverage
 quality:
   lint: ""
-  lint_commands:
-    []
+  lint_commands: []
   typecheck: ""
-  typecheck_commands:
-    []
+  typecheck_commands: []
   format: ""
-  format_commands:
-    []
+  format_commands: []

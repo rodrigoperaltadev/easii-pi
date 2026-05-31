@@ -24,15 +24,21 @@
     "access": "public"
   },
   "pi": {
-    "extensions": ["./extensions"],
-    "skills": ["./skills"]
+    "extensions": [
+      "./extensions"
+    ],
+    "skills": [
+      "./skills"
+    ]
   },
   "peerDependencies": {
     "@earendil-works/pi-coding-agent": "*"
   },
   "devDependencies": {
     "@earendil-works/pi-coding-agent": "*",
-    "typescript": "^5.0.0"
+    "@vitest/ui": "^4.1.7",
+    "typescript": "^5.0.0",
+    "vitest": "^4.1.7"
   },
   "repository": {
     "type": "git",
