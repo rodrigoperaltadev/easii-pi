@@ -847,12 +847,7 @@ function formatCapability(
 	return `  ${statusIcon(capability.status)} ${label}: ${capability.summary}`;
 }
 
-function buildReport(
-	stack: DetectedStack,
-	suggestions: SkillSuggestion[],
-	mcpSuggestions: McpSuggestion[] = [],
-	capabilities?: ProjectCapabilities,
-): string {
+function formatStackInfo(stack: DetectedStack): string[] {
 	const lines: string[] = [
 		`${color("[@easii/pi]", "cyan")} ${color("Stack detected", "bold")}: ${color(PROFILE_LABELS[stack.profile], "green")}`,
 	];
@@ -869,65 +864,91 @@ function buildReport(
 			`  ${color("✓", "green")} State: ${stack.stateManagement.join(", ")}`,
 		);
 
-	if (capabilities) {
-		lines.push("");
-		lines.push(
-			color("Detected capabilities", "magenta") + color(" — read-only", "dim"),
-		);
-		lines.push(formatCapability("Unit tests", capabilities.unitTests));
-		lines.push(formatCapability("E2E", capabilities.e2eTests));
-		lines.push(formatCapability("Strict TDD", capabilities.strictTdd));
-		lines.push(formatCapability("CI", capabilities.ci));
-		lines.push(formatCapability("CD/deploy", capabilities.cd));
-		if (capabilities.docker.status !== "not-applicable") {
-			lines.push(formatCapability("Docker", capabilities.docker));
-		}
+	return lines;
+}
+
+function formatCapabilitiesReport(capabilities: ProjectCapabilities): string[] {
+	const lines: string[] = [
+		"",
+		color("Detected capabilities", "magenta") +
+			color(" — read-only", "dim"),
+	];
+	lines.push(formatCapability("Unit tests", capabilities.unitTests));
+	lines.push(formatCapability("E2E", capabilities.e2eTests));
+	lines.push(formatCapability("Strict TDD", capabilities.strictTdd));
+	lines.push(formatCapability("CI", capabilities.ci));
+	lines.push(formatCapability("CD/deploy", capabilities.cd));
+	if (capabilities.docker.status !== "not-applicable") {
+		lines.push(formatCapability("Docker", capabilities.docker));
 	}
+	return lines;
+}
 
-	if (suggestions.length > 0) {
-		lines.push("");
-		lines.push(
-			color("Suggested skills", "magenta") +
-				color(" — already applicable to this stack", "dim"),
-		);
+function formatSkillsReport(suggestions: SkillSuggestion[]): string[] {
+	if (suggestions.length === 0) return [];
 
-		for (const s of suggestions) {
-			if (s.source === "marketplace") {
-				lines.push(
-					`  ${color("→", "yellow")} ${color("[marketplace]", "dim")} ${s.name}  ★${s.rating.toFixed(1)}  (${s.downloads.toLocaleString()} installs)`,
-				);
-				lines.push(`     Install: ${s.installCmd}`);
-				if (s.description) lines.push(color(`     ${s.description}`, "dim"));
-			} else {
-				lines.push(
-					`  ${color("→", "yellow")} ${color("[@easii/pi]", "dim")} /skill:${s.skillName}  — ${s.reason}`,
-				);
-			}
-		}
-	}
+	const lines: string[] = [
+		"",
+		color("Suggested skills", "magenta") +
+			color(" — already applicable to this stack", "dim"),
+	];
 
-	if (mcpSuggestions.length > 0) {
-		lines.push("");
-		lines.push(
-			color("Suggested MCPs", "magenta") +
-				color(" — entries for mcpServers in .mcp.json or .pi/mcp.json", "dim"),
-		);
-		for (const mcp of mcpSuggestions) {
+	for (const s of suggestions) {
+		if (s.source === "marketplace") {
 			lines.push(
-				`  ${color("→", "yellow")} ${color(mcp.name, "bold")}  — ${mcp.reason}`,
+				`  ${color("→", "yellow")} ${color("[marketplace]", "dim")} ${s.name}  ★${s.rating.toFixed(1)}  (${s.downloads.toLocaleString()} installs)`,
 			);
-			lines.push(formatMcpEntry(mcp.serverKey, mcp.config));
-			if (mcp.setupHint) lines.push(color(`     ${mcp.setupHint}`, "dim"));
+			lines.push(`     Install: ${s.installCmd}`);
+			if (s.description) lines.push(color(`     ${s.description}`, "dim"));
+		} else {
+			lines.push(
+				`  ${color("→", "yellow")} ${color("[@easii/pi]", "dim")} /skill:${s.skillName}  — ${s.reason}`,
+			);
 		}
-		lines.push(
-			color(
-				"  Tip: with pi-mcp-adapter, use /mcp setup to import existing configs.",
-				"dim",
-			),
-		);
 	}
 
-	return lines.join("\n");
+	return lines;
+}
+
+function formatMcpsReport(mcpSuggestions: McpSuggestion[]): string[] {
+	if (mcpSuggestions.length === 0) return [];
+
+	const lines: string[] = [
+		"",
+		color("Suggested MCPs", "magenta") +
+			color(" — entries for mcpServers in .mcp.json or .pi/mcp.json", "dim"),
+	];
+	for (const mcp of mcpSuggestions) {
+		lines.push(
+			`  ${color("→", "yellow")} ${color(mcp.name, "bold")}  — ${mcp.reason}`,
+		);
+		lines.push(formatMcpEntry(mcp.serverKey, mcp.config));
+		if (mcp.setupHint) lines.push(color(`     ${mcp.setupHint}`, "dim"));
+	}
+	lines.push(
+		color(
+			"  Tip: with pi-mcp-adapter, use /mcp setup to import existing configs.",
+			"dim",
+		),
+	);
+
+	return lines;
+}
+
+function buildReport(
+	stack: DetectedStack,
+	suggestions: SkillSuggestion[],
+	mcpSuggestions: McpSuggestion[] = [],
+	capabilities?: ProjectCapabilities,
+): string {
+	const sections = [
+		...formatStackInfo(stack),
+		...(capabilities ? formatCapabilitiesReport(capabilities) : []),
+		...formatSkillsReport(suggestions),
+		...formatMcpsReport(mcpSuggestions),
+	];
+
+	return sections.join("\n");
 }
 
 // ─── Project Setup (SDD schema) ───────────────────────────────────────────
