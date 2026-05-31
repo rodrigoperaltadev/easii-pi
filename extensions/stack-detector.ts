@@ -237,11 +237,11 @@ function detectStack(cwd: string): DetectedStack | null {
 
 // ─── Marketplace Search ─────────────────────────────────────────────────────
 
+// API endpoint for openagentskill.com marketplace
 const MARKETPLACE_API = "https://openagentskill.com/api/agent";
-
-// Minimum downloads to consider a marketplace skill trustworthy
+// Minimum downloads to consider a marketplace skill trustworthy (quality filter)
 const MIN_DOWNLOADS = 500;
-// Minimum rating (out of 5)
+// Minimum rating (out of 5) to consider a marketplace skill trustworthy
 const MIN_RATING = 3.5;
 
 async function searchMarketplace(query: string): Promise<MarketplaceSkill[]> {
