@@ -30,4 +30,10 @@ export type {
 } from "./capabilities.js";
 
 // setup
-export type { SetupPreferences, SetupUi } from "./setup.js";
+export type {
+	SetupPreferences,
+	SetupUi,
+	NotificationLevel,
+	NotificationService,
+	ConfirmationService,
+} from "./setup.js";

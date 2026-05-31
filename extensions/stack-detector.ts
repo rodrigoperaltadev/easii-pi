@@ -299,7 +299,7 @@ function getMarketplaceQueries(stack: DetectedStack): string[] {
 	}
 }
 
-// Skills locales de fallback (las que creamos en @easii/pi)
+// Local fallback skills (created in @easii/pi)
 function getLocalFallbacks(stack: DetectedStack): LocalSkill[] {
 	const local: LocalSkill[] = [];
 
@@ -312,27 +312,27 @@ function getLocalFallbacks(stack: DetectedStack): LocalSkill[] {
 			},
 			{
 				skillName: "react-native",
-				reason: "Testing RN, componentes, performance, diferencias iOS/Android",
+				reason: "Testing RN, components, performance, iOS/Android differences",
 				source: "local",
 			},
 		);
 		if (stack.e2eFramework === "maestro") {
 			local.push({
 				skillName: "rn-e2e-maestro",
-				reason: "Flujos E2E con Maestro detectado en el proyecto",
+				reason: "E2E flows with Maestro detected in the project",
 				source: "local",
 			});
 		}
 	} else if (stack.profile === "react-native-bare") {
 		local.push({
 			skillName: "react-native",
-			reason: "Native modules, linking, diferencias de plataforma",
+			reason: "Native modules, linking, platform differences",
 			source: "local",
 		});
 		if (stack.e2eFramework === "maestro") {
 			local.push({
 				skillName: "rn-e2e-maestro",
-				reason: "Flujos E2E con Maestro detectado en el proyecto",
+				reason: "E2E flows with Maestro detected in the project",
 				source: "local",
 			});
 		}
@@ -492,8 +492,7 @@ function getMcpCatalog(stack: DetectedStack, cwd: string): McpSuggestion[] {
 		hasDep(deps, "prisma") ||
 		hasDep(deps, "@prisma/client")
 	) {
-		const hasPrisma =
-			hasDep(deps, "prisma") || hasDep(deps, "@prisma/client");
+		const hasPrisma = hasDep(deps, "prisma") || hasDep(deps, "@prisma/client");
 		catalog.push({
 			serverKey: "postgres",
 			name: "PostgreSQL MCP",
@@ -643,7 +642,7 @@ function readGithubWorkflowText(cwd: string): string {
 
 function detectStrictTdd(configText: string): ProjectCapability {
 	if (!configText) {
-		return { status: "missing", summary: "OpenSpec config no detectado" };
+		return { status: "missing", summary: "OpenSpec config not detected" };
 	}
 
 	const strictEnabled = /^strict_tdd:\s*true\s*(?:#.*)?$/m.test(configText);
@@ -681,35 +680,35 @@ function detectCapabilities(
 		? {
 				status: "configured",
 				summary: commands.unitCommand,
-				details: [
-					stack.testFramework !== "none"
-						? stack.testFramework
-						: "script detectado",
-				],
-			}
-		: stack.testFramework !== "none"
-			? {
-					status: "detected-partial",
-					summary: `${stack.testFramework} detectado sin script claro`,
+					details: [
+						stack.testFramework !== "none"
+							? stack.testFramework
+							: "detected via script",
+					],
 				}
-			: { status: "missing", summary: "unit tests no detectados" };
+				: stack.testFramework !== "none"
+					? {
+							status: "detected-partial",
+							summary: `${stack.testFramework} detected without clear script`,
+						}
+					: { status: "missing", summary: "unit tests not detected" };
 
 	const e2eTests: ProjectCapability = commands.e2eCommand
 		? {
 				status: "configured",
 				summary: commands.e2eCommand,
 				details: [
-					stack.e2eFramework !== "none"
-						? stack.e2eFramework
-						: "script detectado",
-				],
-			}
-		: stack.e2eFramework !== "none"
-			? {
-					status: "detected-partial",
-					summary: `${stack.e2eFramework} detectado sin comando claro`,
+							stack.e2eFramework !== "none"
+								? stack.e2eFramework
+								: "detected via script",
+						],
 				}
-			: { status: "missing", summary: "E2E no detectado" };
+				: stack.e2eFramework !== "none"
+					? {
+						status: "detected-partial",
+						summary: `${stack.e2eFramework} detected without clear command`,
+					}
+					: { status: "missing", summary: "E2E not detected" };
 
 	const hasCi =
 		hasGithubWorkflow(cwd) ||
@@ -725,12 +724,12 @@ function detectCapabilities(
 		);
 	const ci: ProjectCapability = hasCi
 		? ciRunsQuality
-			? { status: "configured", summary: "CI detectado con checks de calidad" }
+			? { status: "configured", summary: "CI detected with quality checks" }
 			: {
 					status: "detected-partial",
-					summary: "CI detectado sin checks claros",
+					summary: "CI detected without clear checks",
 				}
-		: { status: "missing", summary: "CI no detectado" };
+		: { status: "missing", summary: "CI not detected" };
 
 	const hasCdFile = hasAnyFile(cwd, [
 		"vercel.json",
@@ -750,12 +749,12 @@ function detectCapabilities(
 							? "configured"
 							: "detected-partial",
 					summary: stack.hasEAS
-						? "EAS Build detectado"
+						? "EAS Build detected"
 						: hasDeployWorkflow
-							? "workflow de deploy/release detectado"
-							: "archivo de plataforma detectado",
+							? "deploy/release workflow detected"
+							: "platform file detected",
 				}
-			: { status: "missing", summary: "CD/deploy no detectado" };
+			: { status: "missing", summary: "CD/deploy not detected" };
 
 	const hasDockerfile = fs.existsSync(path.join(cwd, "Dockerfile"));
 	const hasCompose = hasAnyFile(cwd, [
@@ -766,21 +765,21 @@ function detectCapabilities(
 	]);
 	const hasDockerignore = fs.existsSync(path.join(cwd, ".dockerignore"));
 	const docker: ProjectCapability = !dockerApplies(stack.profile)
-		? { status: "not-applicable", summary: "no evaluado para este perfil" }
+		? { status: "not-applicable", summary: "not evaluated for this profile" }
 		: hasDockerfile
 			? {
 					status: hasDockerignore ? "configured" : "detected-partial",
 					summary: hasDockerignore
 						? "Dockerfile + .dockerignore"
-						: "Dockerfile sin .dockerignore",
-					details: hasCompose ? ["compose detectado"] : undefined,
+						: "Dockerfile without .dockerignore",
+					details: hasCompose ? ["compose detected"] : undefined,
 				}
 			: hasCompose
 				? {
 						status: "detected-partial",
-						summary: "compose detectado sin Dockerfile",
+						summary: "compose detected without Dockerfile",
 					}
-				: { status: "missing", summary: "Docker no detectado" };
+				: { status: "missing", summary: "Docker not detected" };
 
 	return {
 		unitTests,
@@ -865,8 +864,7 @@ function formatStackInfo(stack: DetectedStack): string[] {
 function formatCapabilitiesReport(capabilities: ProjectCapabilities): string[] {
 	const lines: string[] = [
 		"",
-		color("Detected capabilities", "magenta") +
-			color(" — read-only", "dim"),
+		color("Detected capabilities", "magenta") + color(" — read-only", "dim"),
 	];
 	lines.push(formatCapability("Unit tests", capabilities.unitTests));
 	lines.push(formatCapability("E2E", capabilities.e2eTests));
