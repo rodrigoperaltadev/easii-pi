@@ -1,0 +1,63 @@
+{
+	"subagents": {
+		"agentOverrides": {
+			"sdd-init": {
+				"model": "openai-codex/gpt-5.5"
+			},
+			"sdd-explore": {
+				"model": "openai-codex/gpt-5.5"
+			},
+			"sdd-proposal": {
+				"model": "openai-codex/gpt-5.5"
+			},
+			"sdd-spec": {
+				"model": "openai-codex/gpt-5.5"
+			},
+			"sdd-design": {
+				"model": "anthropic/claude-sonnet-4-6"
+			},
+			"sdd-tasks": {
+				"model": "openai-codex/gpt-5.5"
+			},
+			"sdd-apply": {
+				"model": "cursor/composer-2.5"
+			},
+			"sdd-verify": {
+				"model": "openai-codex/gpt-5.5"
+			},
+			"sdd-sync": {
+				"model": "cursor/composer-2.5"
+			},
+			"sdd-archive": {
+				"model": "cursor/composer-latest"
+			},
+			"context-builder": {
+				"model": "openai-codex/gpt-5.5"
+			},
+			"delegate": {
+				"model": "openai-codex/gpt-5.5"
+			},
+			"oracle": {
+				"model": "openai-codex/gpt-5.5"
+			},
+			"planner": {
+				"model": "openai-codex/gpt-5.5"
+			},
+			"researcher": {
+				"model": "openai-codex/gpt-5.5"
+			},
+			"reviewer": {
+				"model": "anthropic/claude-sonnet-4-6"
+			},
+			"scout": {
+				"model": "cursor/composer-latest"
+			},
+			"sdd-onboard": {
+				"model": "openai-codex/gpt-5.5"
+			},
+			"worker": {
+				"model": "cursor/composer-latest"
+			}
+		}
+	}
+}

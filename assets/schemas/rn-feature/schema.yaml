@@ -1,0 +1,87 @@
+name: rn-feature
+version: 1
+description: >
+  Flujo SDD para features de React Native / Expo.
+  Incluye consideraciones de plataforma (iOS/Android), testing
+  y E2E como paso opcional según la criticidad del cambio.
+
+artifacts:
+  - id: proposal
+    generates: proposal.md
+    description: >
+      Propuesta del cambio: qué, por qué, y consideraciones
+      específicas de plataforma móvil.
+    template: proposal.md
+    instruction: |
+      Crear una propuesta que explique POR QUÉ se necesita este cambio.
+      Incluir:
+        - El problema o necesidad que resuelve
+        - Impacto esperado en el usuario
+        - Si afecta iOS, Android o ambas plataformas
+        - Si requiere permisos del dispositivo (cámara, ubicación, etc.)
+        - Si requiere native modules nuevos
+        - Qué NO incluye este cambio (out of scope)
+    requires: []
+
+  - id: specs
+    generates: specs.md
+    description: >
+      Especificaciones funcionales: comportamiento esperado en cada
+      plataforma, edge cases y criterios de aceptación.
+    template: specs.md
+    instruction: |
+      Escribir specs usando formato Given/When/Then.
+      Incluir:
+        - Comportamiento en iOS
+        - Comportamiento en Android
+        - Estados de carga y error
+        - Casos edge (sin conexión, permisos denegados, etc.)
+        - Criterios de aceptación claros y verificables
+    requires:
+      - proposal
+
+  - id: design
+    generates: design.md
+    description: >
+      Diseño técnico: arquitectura de la feature, componentes,
+      hooks, navigation y estrategia de testing.
+    template: design.md
+    instruction: |
+      Describir CÓMO implementar la feature.
+      Incluir:
+        - Árbol de componentes (Screen → View → componentes)
+        - Hooks custom necesarios
+        - Cambios de navigation / rutas nuevas (si aplica)
+        - Estrategia de state management
+        - API calls y manejo de errores
+        - Plan de testing: qué va en unit tests, qué en E2E
+        - Si hay E2E: qué flows de Maestro se necesitan
+    requires:
+      - specs
+
+  - id: tasks
+    generates: tasks.md
+    description: >
+      Lista de tareas de implementación, ordenadas y con
+      criterio de "done" por cada una.
+    template: tasks.md
+    instruction: |
+      Generar tareas concretas y atómicas.
+      Cada tarea debe:
+        - Poder completarse en una sesión
+        - Tener un criterio de "done" verificable
+        - Estar ordenada por dependencias (no bloquearse entre sí)
+      
+      Separar en secciones:
+        1. Setup / estructura base
+        2. Lógica y hooks
+        3. UI / componentes
+        4. Tests unitarios
+        5. E2E con Maestro (si aplica — marcar como OPCIONAL si no es flujo crítico)
+        6. Pulido y PR
+    requires:
+      - design
+
+apply:
+  requires: [tasks]
+  tracks: tasks.md

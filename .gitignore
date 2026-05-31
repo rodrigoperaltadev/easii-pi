@@ -1,0 +1,39 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+build/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Pi cache
+.pi-lens/
+.atl/
+.pi'session/
+
+# Temporary
+tmp/
+temp/
+*.tmp
+
+# Package manager locks (keep if needed)
+# package-lock.json
+# pnpm-lock.yaml

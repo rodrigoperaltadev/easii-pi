@@ -1,0 +1,41 @@
+{
+  "name": "@easii/pi",
+  "version": "0.2.0",
+  "description": "Easii Studio Pi package: stack-aware harness for frontend, mobile, and game development",
+  "keywords": [
+    "pi-package",
+    "pi-extension",
+    "react-native",
+    "expo",
+    "frontend",
+    "mobile"
+  ],
+  "author": "rodrigoperaltadev",
+  "license": "MIT",
+  "files": [
+    "AGENTS.md",
+    "README.md",
+    "assets",
+    "docs",
+    "extensions",
+    "skills"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "pi": {
+    "extensions": ["./extensions"],
+    "skills": ["./skills"]
+  },
+  "peerDependencies": {
+    "@earendil-works/pi-coding-agent": "*"
+  },
+  "devDependencies": {
+    "@earendil-works/pi-coding-agent": "*",
+    "typescript": "^5.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/easii-studio/pi.git"
+  }
+}
