@@ -694,6 +694,14 @@ function dockerApplies(profile: ProfileName): boolean {
 	);
 }
 
+function e2eApplies(profile: ProfileName): boolean {
+	return profile !== "npm-library";
+}
+
+function cdApplies(profile: ProfileName): boolean {
+	return profile !== "npm-library";
+}
+
 function detectUnitTestsCapability(
 	commands: InferredProjectCommands,
 	stack: DetectedStack,
@@ -722,6 +730,9 @@ function detectE2eCapability(
 	commands: InferredProjectCommands,
 	stack: DetectedStack,
 ): ProjectCapability {
+	if (!e2eApplies(stack.profile)) {
+		return { status: "not-applicable", summary: "not applicable for this profile" };
+	}
 	if (commands.e2eCommand) {
 		return {
 			status: "configured",
@@ -771,6 +782,9 @@ function detectCdCapability(
 	cwd: string,
 	stack: DetectedStack,
 ): ProjectCapability {
+	if (!cdApplies(stack.profile)) {
+		return { status: "not-applicable", summary: "not applicable for this profile" };
+	}
 	const hasCdFile = hasAnyFile(cwd, [
 		"vercel.json",
 		"netlify.toml",
