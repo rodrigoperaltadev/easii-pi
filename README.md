@@ -1,6 +1,6 @@
 # @easii/pi
 
-**Stack-aware Pi harness for frontend, mobile and game development.**
+**Stack detector for Pi: suggests skills, MCPs and SDD schemas for your project.**
 
 Pi package from [Easii Studio](https://github.com/easii-studio) that automatically detects your project tech stack and suggests relevant skills, MCPs and SDD flows.
 

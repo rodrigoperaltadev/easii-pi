@@ -1,7 +1,7 @@
 {
   "name": "@easii/pi",
-  "version": "0.2.1",
-  "description": "Easii Studio Pi package: stack-aware harness for frontend, mobile, and game development",
+  "version": "0.2.2",
+  "description": "Stack detector for Pi: suggests skills, MCPs and SDD schemas for your project",
   "keywords": [
     "pi-package",
     "pi-extension",
@@ -25,7 +25,7 @@
   },
   "pi": {
     "extensions": [
-      "./extensions"
+      "./extensions/stack-detector.ts"
     ],
     "skills": [
       "./skills"
