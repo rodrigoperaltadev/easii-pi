@@ -1,6 +1,6 @@
 {
   "name": "@easii/pi",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "description": "Stack detector for Pi: suggests skills, MCPs and SDD schemas for your project",
   "keywords": [
     "pi-package",
