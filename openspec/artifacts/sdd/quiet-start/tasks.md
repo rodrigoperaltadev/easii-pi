@@ -199,10 +199,9 @@ pi.on("session_start", async (_event, ctx) => {
 });
 ```
 
-Also add the imports at the top of the file:
+Also add the imports at the top of the file (crypto was already added in task 6 — do not duplicate):
 
 ```typescript
-import * as crypto from "node:crypto";
 import { getVerbosity } from "./state/settings.js";
 import { readState, writeState } from "./state/state-file.js";
 ```

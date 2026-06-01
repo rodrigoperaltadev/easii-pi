@@ -168,23 +168,33 @@ Son complementarios. gentle-pi asegura que no olvides cargar las skills que ya i
 - [x] Integración con `/sdd-init`: pre-poblar `openspec/config.yaml` con stack detectado, bloque `easii`, comandos de test/typecheck inferidos
 - [x] Comando interactivo `/easii:setup-project` que explica, pregunta en bloque por recomendaciones de capacidades faltantes aplicables (strict TDD, E2E, CI/CD, Docker), guarda preferencias y copia el schema correcto al proyecto
 - [x] Sugerencia de MCPs relevantes (Expo MCP, Supabase MCP, etc.) según deps detectadas
-- [x] Auditoría read-only de capacidades: unit tests, E2E, strict TDD, CI, CD/deploy y Docker cuando aplica
+- [x] Diagnóstico/readiness de capacidades: unit tests, E2E, strict TDD, CI, CD/deploy y Docker cuando aplica
+
+### v0.2.1 (quiet-start — refactor de UX)
+- [x] session_start silencioso por defecto con one-liner por estado (`.pi/easii-state.json`)
+- [x] Reporte completo movido a on-demand vía `/easii:stack`
+- [x] Knob de verbosity en `.pi/settings.json` (`off | minimal | full`, default `minimal`)
+- [x] Hash de señales estable: perfil + trigger deps desde `detectStack()`
 
 ### v0.3.0 (futuro)
 - [ ] **Especialidades / playbooks** — bundles por perfil (skills + MCPs + schema + arquitectura + testing). Ver [`docs/future/specialties-playbooks.md`](docs/future/specialties-playbooks.md)
+- [ ] Evaluar ctx7 como fuente complementaria de skills (atado al soporte web/Next)
 - [ ] Skills: nextjs, react-web
 - [ ] Schema: rn-library (librería npm)
 - [ ] Soporte gamedev: Phaser skill + schema gamedev
 
-### v0.4.0+ (futuro — harnesses de inception/producto)
-- [ ] **`/easii:new-project`** — preguntas guiadas para crear un Project Blueprint antes de scaffold. Ver [`docs/future/project-inception-requirements-harnesses.md`](docs/future/project-inception-requirements-harnesses.md)
-- [ ] **`/easii:requirements`** — convertir requerimientos de cliente en casos de uso, historias, criterios de aceptación y primer slice SDD.
+### v0.4.0+ (inception / producto)
+- [ ] **`/easii:new-project`** — Project Blueprint antes de scaffold. Ver [`docs/future/project-inception-requirements-harnesses.md`](docs/future/project-inception-requirements-harnesses.md)
+- [ ] **`/easii:requirements`** — requerimientos de cliente → casos de uso, historias, criterios, primer slice SDD
 
-### No entra nunca (ya cubierto por otros paquetes)
+### No entra nunca (delegado a otros paquetes / planos)
 - Memoria entre sesiones → gentle-engram
 - Todo tracking → rpiv-todo
-- Subagent orchestration → pi-subagents + pi-intercom
+- Orquestación de subagentes → pi-subagents + pi-intercom
 - Preguntas estructuradas al usuario → rpiv-ask-user-question
+- Linting / código muerto / duplicado en vivo → pi-lens
+- Auditoría de calidad de código (Clean Code, SOLID, patrones) → paquete hermano `@easii/audit`
+- Descubrimiento/búsqueda de skills genéricas → delegado a marketplaces (openagentskill, ctx7); easii-pi se queda con el detector, las skills mobile/Expo, MCPs, schema, diagnóstico y bundling
 
 ---
 
